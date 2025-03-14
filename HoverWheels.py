@@ -7,12 +7,7 @@ email   txinto@elporis.com
 license  MIT License
 """
 
-import os, sys, io
-import M5
-from M5 import *
-from HoverWheels import HoverWheels
-import time
-from hardware import UART
+import machine
 
 class HoverWheels:
     """
@@ -56,7 +51,7 @@ class HoverWheels:
                 max: '100'
                 min: '0'
         """
-        self = UART(uart_num, baudrate=115200, bits=8, parity=None, stop=1, tx=tx, rx=rx, txbuf=256, rxbuf=256, timeout=0, timeout_char=0, invert=0, flow=0)
+        self.uart = machine.UART(uart_num, baudrate=115200, bits=8, parity=None, stop=1, tx=tx, rx=rx, timeout=0, timeout_char=0, invert=0, flow=0)
 
     def command(self, steer: int = 0, speed: int = 0):
         """
@@ -89,7 +84,7 @@ class HoverWheels:
         checksum = (start ^ steer) ^ speed
         msg[6] = checksum & 255
         msg[7] = checksum >> 8
-        self.write(bytes(msg))
+        self.uart.write(bytes(msg))
 
     def query(self, hover_data):
         """
@@ -149,8 +144,8 @@ class HoverWheels:
         temp_flag = False
         cmdled_flag = False
 
-        while self.any():
-            hr_msg_rcv = self.read(1)
+        while self.uart.any():
+            hr_msg_rcv = self.uart.read(1)
             hr_byte_entrante = hr_msg_rcv[0]
             if hr_estado_recepcion==hr_st_inicio:
                 hr_byte_anterior = hr_byte_entrante
@@ -239,7 +234,7 @@ class HoverWheels:
             else:
                 pass
 
-        if (len(hover_data)>=7):
+        if (hover_data != None and len(hover_data)>=7):
             cmd1_rcv = hover_data[0]
             cmd2_rcv = hover_data[1]
             spd_r_rcv = hover_data[2]
